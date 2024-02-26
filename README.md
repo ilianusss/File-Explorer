@@ -1,2 +1,2 @@
 # S4_File-Explorer
-File Explore in Rust
+File Explorer in Rust
