@@ -1,0 +1,17 @@
+(Remplace les issues pcq j'ai trop la flemme)
+A FAIRE POUR LA SOUTENANCE:
+INTERFACE:
+- Implémenter toutes les fonctionnalités du menu
+- Implémenter le paste
+- Connecter la recherche
+- New directory : si la directory n'est pas crée faut qu'on le sache
+- Fix la directory en haut (faut la mettre en joli là les /.. sont affichés)
+
+
+BASH COMMANDS:
+- Implémenter les fonctions que l'interface doit implémenter
+
+
+ALGORITHMES:
+- Améliorer l'algorithme
+- Implémenter le zip

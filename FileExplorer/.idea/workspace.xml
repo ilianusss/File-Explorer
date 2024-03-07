@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="31a097b8-aea0-4350-ad7d-7d52665d71c4" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/bash_commands/bash_commands.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/bash_commands/bash_commands.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/interface/interface.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/interface/interface.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
-    </list>
+    <list default="true" id="31a097b8-aea0-4350-ad7d-7d52665d71c4" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -59,7 +54,7 @@
       <workItem from="1708968607182" duration="9000" />
       <workItem from="1709210811056" duration="399000" />
       <workItem from="1709483511584" duration="4000" />
-      <workItem from="1709809962575" duration="7927000" />
+      <workItem from="1709809962575" duration="8460000" />
     </task>
     <servers />
   </component>
