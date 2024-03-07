@@ -14,8 +14,8 @@ pub fn change_d(path:&str){
 
 //     DIRECTORY
 // CREATE DIRECTORY
-pub fn create_dir(path:&str, name:&str){
-    let new_path = format!("{}{}", path, name);
+pub fn create_dir(path: &str, name: &str) {
+    let new_path = format!("{}/{}", path, name);
     if let Err(err) = fs::create_dir(new_path) {
         eprintln!("Error creating directory: {}", err);
     }
