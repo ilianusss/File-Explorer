@@ -8,20 +8,19 @@ use gtk::{Application, Box, Orientation, ScrolledWindow, ListStore, TreeViewColu
 use glib::{MainContext, clone};
 use chrono::{DateTime, Local};
 use std::rc::Rc;
+use std::fs::DirEntry;
+
 
 //BASH COMMANDS
 use FileExplorer::bash_commands::bash_commands::*;
 
 //ALGORITHMS
-
+use FileExplorer::algorithms::algorithms::*;
 
 fn main() {
 // ALGORITHMS
-    /// IMPLEMENTER LA CREATION DU VECTEUR
-
-
-
-
+    println!("Indexing all files");
+    let search_files = get_paths("/home/");
 
 // UI
   // SETUP
@@ -30,6 +29,10 @@ fn main() {
     if let Ok(current_dir) = env::current_dir() {
         *current_directory.borrow_mut() = current_dir.to_string_lossy().to_string();
     }
+    
+    // Initialize search mode variable
+    let search_mode = Rc::new(RefCell::new(false));
+    let search_entries = Rc::new(RefCell::new(Vec::new()));
 
     // Initialize GTK
     gtk::init().expect("Failed to initialize GTK.");
@@ -180,15 +183,86 @@ fn main() {
     });
 
 
-   // Search button
+
+
+    // Search button
+    
+    // Clone async variables
+    let search_entries_clone = Rc::clone(&search_entries);
+    let search_mode_clone = Rc::clone(&search_mode);
+    let list_store_clone = Rc::new(RefCell::new(list_store.clone()));
+    let cd_directory_clone = Rc::clone(&current_directory);
+
     search_button.connect_clicked(move |_| {
-        /// IMPLEMENT CODE
-        println!("Search button clicked!");
+        let text = search_entry.get_text();
+        if !text.is_empty() {
+
+            *search_mode_clone.borrow_mut() = true;
+            (*search_entries_clone.borrow_mut()).clear();
+
+            let text = text.to_string();
+            let search_results = search_filename(text.as_str(), &search_files);
+            let list_store_ref = list_store_clone.borrow_mut();
+            list_store_ref.clear();
+
+            // Iter in all results and get their DirEntry -> add them to search_entries
+            for path_string in search_results.iter() {
+                let path = Path::new(&path_string);
+                if let Some(parent) = path.parent() {
+                    if let Some(parent_str) = parent.to_str() {
+                        if let Ok(iters) = fs::read_dir(parent_str) {
+                            for iter in iters {
+                                match iter {
+                                    Ok(entry) => if let Ok(filename) = entry.file_name().into_string() {
+                                        if filename==text {
+                                            (*search_entries_clone.borrow_mut()).push(entry);
+                                        }
+                                    }
+                                    Err(_) => ()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Refresh list store using search's results
+            for entry in (*search_entries_clone.borrow_mut()).iter() {
+                if let Some(file_name) = entry.file_name().to_str() {
+                let metadata = fs::metadata(entry.path()).ok();
+                let file_type = get_file_type(&entry);
+                let file_size = format_file_size(metadata.as_ref().map(|meta| meta.len()));
+                let last_modified = metadata
+                    .and_then(|meta| meta.modified().ok())
+                    .map(|modified| modified.duration_since(UNIX_EPOCH).ok())
+                    .and_then(|modified_time| Some(format_last_modified(modified_time)));
+
+                // Insert values into the list store
+                list_store_ref.insert_with_values(
+                    None,
+                    &[0, 1, 2, 3],
+                    &[&file_name, &file_type, &file_size, &last_modified.unwrap_or_default()],
+                );
+                }
+            }
+        }
+        else {
+
+            // Exit search mode and go to /home
+            *search_mode_clone.borrow_mut() = false;
+            (*search_entries_clone.borrow_mut()).clear();
+            *cd_directory_clone.borrow_mut() = String::from("/home");
+            // (Add current_directory_label modification)
+            populate_list_store(&*list_store_clone.borrow_mut(), &*cd_directory_clone.borrow_mut());
+        }
+
     });
 
 
    // CD
     let cd_directory_clone = Rc::clone(&current_directory);
+    let search_entries_clone = Rc::clone(&search_entries);
+    let search_mode_clone = Rc::clone(&search_mode);
 
     tree_view.connect_row_activated(move |_tree_view, path, _column| {
         if let Some(iter) = list_store.get_iter(path) {
@@ -197,11 +271,34 @@ fn main() {
 
             if file_type.as_deref() == Some("Directory") {
                 // Change directory and update list store
-                let selected_dir = format!("{}/{}", *cd_directory_clone.borrow(), file_name.unwrap_or_default());
-                current_directory_label.set_text(&selected_dir);
-                *cd_directory_clone.borrow_mut() = selected_dir.clone();
+                
+                // If list_store contains search's results
+                if *search_mode_clone.borrow() == true {
+                    if let Some(index) = path.get_indices().get(0) {
+                        let absolute_path = search_entries_clone.borrow()[*index as usize].path().to_string_lossy().into_owned();
+                        // Set courant path to absolute path of search result clicked
+                        current_directory_label.set_text(&absolute_path);
+                        *cd_directory_clone.borrow_mut() = absolute_path.clone();
+                        *search_mode_clone.borrow_mut() = false;
+                    }
+                }
+                else {
+                    // If .. go to parent folder, else go to folder clicked
+                    let dir_name = file_name.unwrap_or_default();
+                    let selected_dir = if dir_name != ".." {
+                        format!("{}/{}", *cd_directory_clone.borrow(), dir_name)}
+                    else {
+                        if let Some(parent) = Path::new(&*cd_directory_clone.borrow()).parent() {
+                            parent.to_string_lossy().into_owned()
+                        }
+                        else {String::from("")}
+                    };
+                    current_directory_label.set_text(&selected_dir);
+                    *cd_directory_clone.borrow_mut() = selected_dir.clone();
+                }
+
                 list_store.clear();
-                populate_list_store(&list_store, &selected_dir);
+                populate_list_store(&list_store, &*cd_directory_clone.borrow_mut());
             } else {
                 // Open the file
                 /// FIX CODE

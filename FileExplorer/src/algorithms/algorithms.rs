@@ -2,32 +2,51 @@ use std::io;
 use std::fs::{self, DirEntry};
 use std::path::Path;
 
-pub fn get_paths(path_str: &str) -> Vec<String> {
-    let mut result: Vec<String> = vec![];
+pub fn get_paths(path_str: &str) -> Vec<(String,String)> {
+    let mut result: Vec<(String,String)> = vec![];
     __get_paths(&Path::new(path_str), &mut result);
-    result.sort();
+    result.sort_by(|a, b| a.0.cmp(&b.0));
     result
 }
 
-fn __get_paths(dir: &Path, result: &mut Vec<String>) -> io::Result<()>{
-    result.push(dir.file_name().unwrap().to_str().unwrap().to_string());
-    if dir.is_dir() {
-        for entry in fs::read_dir(dir)? {
-            let entry = entry?;
-            let path = entry.path();
-            if path.is_dir() {
-                __get_paths(&path, result)?;
-            }
+fn __get_paths(dir: &Path, result: &mut Vec<(String, String)>) -> io::Result<()> {
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            result.push((path.file_name().unwrap().to_str().unwrap().to_string(), path.to_str().unwrap().to_string()));
+            __get_paths(&path, result)?;
+        } else if let Some(file_name) = path.file_name().and_then(|s| s.to_str()) {
+            result.push((file_name.to_string(), path.to_str().unwrap().to_string()));
         }
     }
     Ok(())
 }
 
-pub fn search_filename(filename: &str, path: &str) -> (bool, usize) {
-    let result = get_paths(path).binary_search(&filename.to_string());
-    if result.is_ok() {
-        return (true, result.unwrap());
+
+pub fn search_filename(filename: &str, files: &Vec<(String,String)>) -> Vec<String> {
+    println!("Searching {} in {} files", filename, files.len());
+    let search_key = filename.to_string();
+    
+    let index: i32 = match files.binary_search_by(|(a, _)| a.cmp(&search_key)) {
+        Ok(index) => index as i32,
+        _ => -1
+    };
+    if index==-1 {return vec![];}
+    else {
+        let search_key: String = files[index as usize].0.clone();
+        let mut result = vec![];
+        let mut i: i32 = index;
+        while i>=0 && files[i as usize].0 == search_key {
+            result.push(files[i as usize].1.clone());
+            i-=1;
+        }
+        i = index+1;
+        let len = files.len() as i32;
+        while i<len && files[i as usize].0 == search_key {
+            result.push(files[i as usize].1.clone());
+            i+=1;
+        }
+        result
     }
-    dbg!(result);
-    (false, 0)
 }

@@ -48,6 +48,8 @@ pub fn add_column(tree_view: &gtk::TreeView, title: &str, col_id: i32) {
 }
 
 
+
+
     // Populate a list store
 pub fn populate_list_store(list_store: &gtk::ListStore, dir_path: &str) {
     // Clear the list store
@@ -71,9 +73,7 @@ pub fn populate_list_store(list_store: &gtk::ListStore, dir_path: &str) {
             &[&"..".to_string(), &"Directory".to_string(), &"".to_string(), &"".to_string()],
         );
     }
-
-    // Iterate through directory entries and populate the list store
-    for entry in entries {
+    for entry in entries.iter() {
         if let Some(file_name) = entry.file_name().to_str() {
             let metadata = fs::metadata(entry.path()).ok();
             let file_type = get_file_type(&entry);
