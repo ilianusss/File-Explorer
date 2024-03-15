@@ -201,7 +201,7 @@ fn main() {
             (*search_entries_clone.borrow_mut()).clear();
 
             let text = text.to_string();
-            let search_results = search_filename(text.as_str(), &search_files);
+            let search_results = search_filename(&text, &search_files);
             let list_store_ref = list_store_clone.borrow_mut();
             list_store_ref.clear();
 
