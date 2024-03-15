@@ -214,7 +214,8 @@ fn main() {
                             for iter in iters {
                                 match iter {
                                     Ok(entry) => if let Ok(filename) = entry.file_name().into_string() {
-                                        if filename==text {
+                                        //if filename.contains(&text) && !(*search_entries_clone.borrow()).contains(entry) {
+                                        if filename == path.file_name().unwrap_or_default().to_string_lossy().into_owned() {
                                             (*search_entries_clone.borrow_mut()).push(entry);
                                         }
                                     }
@@ -225,6 +226,9 @@ fn main() {
                     }
                 }
             }
+
+            // Sort algo for files's importance
+            (*search_entries_clone.borrow_mut()).sort_by_key(|dir_entry| dir_entry.path().to_string_lossy().matches('/').count());
 
             // Refresh list store using search's results
             for entry in (*search_entries_clone.borrow_mut()).iter() {
