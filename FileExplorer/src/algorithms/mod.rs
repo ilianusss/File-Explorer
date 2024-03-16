@@ -1,1 +1,2 @@
-pub mod algorithms;
+pub mod indexing;
+pub mod search_prefix;

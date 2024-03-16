@@ -15,12 +15,12 @@ use std::fs::DirEntry;
 use FileExplorer::bash_commands::bash_commands::*;
 
 //ALGORITHMS
-use FileExplorer::algorithms::algorithms::*;
+use FileExplorer::algorithms::*;
 
 fn main() {
 // ALGORITHMS
     println!("Indexing all files");
-    let search_files = get_paths("/home/");
+    let search_files = indexing::index_files_fs("/home/");
 
 // UI
   // SETUP
@@ -201,7 +201,7 @@ fn main() {
             (*search_entries_clone.borrow_mut()).clear();
 
             let text = text.to_string();
-            let search_results = search_filename(&text, &search_files);
+            let search_results = search_prefix::search_filename(&text, &search_files);
             let list_store_ref = list_store_clone.borrow_mut();
             list_store_ref.clear();
 
