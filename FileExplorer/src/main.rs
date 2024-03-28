@@ -365,36 +365,67 @@ fn main() {
   // MENUS
 
     // Create menu
-fn create_context_menu() -> gtk::Menu {
-    let menu = gtk::Menu::new();
+    fn create_context_menu() -> gtk::Menu {
+        let menu = gtk::Menu::new();
 
-    // Create menu items for common actions
-    let copy_item = gtk::MenuItem::with_label("Copy");
-    let cut_item = gtk::MenuItem::with_label("Cut");
-    let delete_item = gtk::MenuItem::with_label("Delete");
-    let compress_item = gtk::MenuItem::with_label("Compress");
-    let decompress_item = gtk::MenuItem::with_label("Decompress");
+        // Create menu items for common actions
+        let copy_item = gtk::MenuItem::with_label("Copy");
+        let cut_item = gtk::MenuItem::with_label("Cut");
+        let delete_item = gtk::MenuItem::with_label("Delete");
+        let compress_item = gtk::MenuItem::with_label("Compress");
+        let decompress_item = gtk::MenuItem::with_label("Decompress");
 
-    // Append menu items to the menu
-    menu.append(&copy_item);
-    menu.append(&cut_item);
-    menu.append(&delete_item);
-    menu.append(&compress_item);
-    menu.append(&decompress_item);
+        // Append menu items to the menu
+        menu.append(&copy_item);
+        menu.append(&cut_item);
+        menu.append(&delete_item);
+        menu.append(&compress_item);
+        menu.append(&decompress_item);
 
-    menu
-}
+        // Connect signals for menu items
+        connect_menu_item_signals(&copy_item);
+        connect_menu_item_signals(&cut_item);
+        connect_menu_item_signals(&delete_item);
+        connect_menu_item_signals(&compress_item);
+        connect_menu_item_signals(&decompress_item);
+
+        menu
+    }
 
     // Connect menu items to actions
-    /// A FAIRE
-fn connect_menu_item_signals(menu_item: &gtk::MenuItem) {
-    // Clone the menu item for use in the closure
-    let menu_item_clone = menu_item.clone();
+    fn connect_menu_item_signals(menu_item: &gtk::MenuItem) {
+        // Clone the menu item for use in the closure
+        let menu_item_clone = menu_item.clone();
 
-    // Connect the 'activate' signal to the closure
-    menu_item.connect_activate(move |_| {
-        // Implement the action you want to perform for each menu item here
-        println!("Menu item '{}' activated", menu_item_clone.get_label().unwrap());
-    });
-}
+        // Connect the 'activate' signal to the closure
+        menu_item.connect_activate(move |_| {
+            // Check which menu item was activated
+            match menu_item_clone.get_label().unwrap().as_str() {
+                "Copy" => {
+                    // Perform deletion of the file
+                    println!("Copy pressed")
+                }
+                "Cut" => {
+                    // Perform deletion of the file
+                    println!("Cut pressed")
+                }
+                "Delete" => {
+                    // Perform deletion of the file
+                    println!("Delete pressed")
+                }
+                "Compress" => {
+                    // Perform deletion of the file
+                    println!("Compress pressed")
+                }
+                "Decompress" => {
+                    // Perform deletion of the file
+                    println!("Decompress pressed")
+                }
+                _ => {
+                    // Implement other actions if needed
+                    println!("Menu item '{}' activated", menu_item_clone.get_label().unwrap());
+                }
+            }
+        });
+    }
 
