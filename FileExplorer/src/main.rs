@@ -415,7 +415,7 @@ fn main() {
     }
 
     // Connect menu items to actions
-    fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String, search_entries: Rc) {
+    fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String, search_entries: Rc<>) {
         // Clone the menu item for use in the closure
         let menu_item_clone = menu_item.clone();
 
@@ -432,8 +432,15 @@ fn main() {
                     println!("Cut pressed")
                 }
                 "Delete" => {
-                    // Perform deletion of the file
-                    println!("Delete pressed")
+                    if let Ok(metadata) = fs::metadata(path) {
+                        if metadata.is_dir() {
+                            remove_dir(&path);
+                        } else if metadata.is_file() {
+                            remove_file(&path);
+                        } else {
+                            println!("It's neither a file nor a directory!");
+                        }
+                    }
                 }
                 "Compress" => {
                     let mut output_file = path.clone();

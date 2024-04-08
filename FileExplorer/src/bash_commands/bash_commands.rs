@@ -22,8 +22,8 @@ pub fn create_dir(path: &str, name: &str) {
 }
 
 // REMOVE DIRECTORY
-pub fn remove_dir(path:&str, name:&str){
-    let new_path = format!("{}{}", path, name);
+pub fn remove_dir(path:&str){
+    let new_path = format!("{}", path);
     if let Err(err) = fs::remove_dir_all(new_path) {
         eprintln!("Error creating directory: {}", err);
     }
@@ -38,8 +38,8 @@ pub fn create_file(path:&str, name:&str){
 }
 
 // REMOVE FILE
-pub fn remove_file(path:&str, name:&str){
-    let new_path = format!("{}{}", path, name);
+pub fn remove_file(path: &str){
+    let new_path = format!("{}", path);
     if let Err(err) = fs::remove_file(new_path) {
         eprintln!("Error creating directory: {}", err);
     }
