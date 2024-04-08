@@ -18,6 +18,7 @@ use FileExplorer::bash_commands::bash_commands::*;
 use FileExplorer::algorithms::*;
 
 fn main() {
+
 // ALGORITHMS
     println!("Indexing all files");
     let search_files = indexing::index_files_fs("/home/");
@@ -414,7 +415,7 @@ fn main() {
     }
 
     // Connect menu items to actions
-    fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String) {
+    fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String, search_entries: Rc) {
         // Clone the menu item for use in the closure
         let menu_item_clone = menu_item.clone();
 
@@ -435,13 +436,37 @@ fn main() {
                     println!("Delete pressed")
                 }
                 "Compress" => {
-                    // Perform deletion of the file
-                    println!("Compress pressed")
+                    let mut output_file = path.clone();
+                    if let Ok(metadata) = fs::metadata(output_file.as_str()) {
+                        if metadata.is_dir() {
+                            output_file.push_str(".zip");
+                            match compression::compress_folder(path.as_str(), output_file.as_str()) {
+                                std::result::Result::Ok(_) => println!("Compress successful"),
+                                std::result::Result::Err(_) => println!("Error while compress")
+                            }
+                        }
+                        else {
+                            println!("Not a folder"); 
+                        }
+                    }
+                    else {println!("File not found");}
+
                 }
                 "Decompress" => {
-                    // Perform deletion of the file
-                    println!("Decompress pressed")
-                }
+                    let output_file = path.clone();
+                    if output_file.ends_with(".zip") {
+                        let output_file = &output_file[..output_file.len()-4];
+                        match compression::uncompress_folder(path.as_str(), output_file) {
+                            std::result::Result::Ok(_) => println!("Uncompress successful"),
+                            std::result::Result::Err(_) => println!("Error while uncompress")
+                        }
+                    }
+                    else {
+                        println!("Not a .zip file");
+                    }
+                },
+
+
                 _ => {
                     // Implement other actions if needed
                     println!("Menu item '{}' activated", menu_item_clone.get_label().unwrap());
