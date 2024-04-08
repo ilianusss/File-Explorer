@@ -125,6 +125,7 @@ fn main() {
     scrolled_window.set_min_content_height(900);
 
     // List store
+    //let list_store = gtk::ListStore::new(&[glib::Type::String, glib::Type::String, glib::Type::String, glib::Type::String]);
     let list_store = gtk::ListStore::new(&[glib::Type::String, glib::Type::String, glib::Type::String, glib::Type::String]);
     let dir_path = env::args().nth(1).unwrap_or_else(|| ".".to_string());
     populate_list_store(&list_store, &dir_path);
@@ -267,11 +268,12 @@ fn main() {
     let cd_directory_clone = Rc::clone(&current_directory);
     let search_entries_clone = Rc::clone(&search_entries);
     let search_mode_clone = Rc::clone(&search_mode);
+    let cd_list_store_clone = list_store.clone();
 
     tree_view.connect_row_activated(move |_tree_view, path, _column| {
-        if let Some(iter) = list_store.get_iter(path) {
-            let file_name = list_store.get_value(&iter, 0).get::<String>().unwrap_or_default();
-            let file_type = list_store.get_value(&iter, 1).get::<String>().unwrap_or_default();
+        if let Some(iter) = cd_list_store_clone.get_iter(path) {
+            let file_name = cd_list_store_clone.get_value(&iter, 0).get::<String>().unwrap_or_default();
+            let file_type = cd_list_store_clone.get_value(&iter, 1).get::<String>().unwrap_or_default();
 
             if file_type.as_deref() == Some("Directory") {
                 // Change directory and update list store
@@ -301,8 +303,8 @@ fn main() {
                     *cd_directory_clone.borrow_mut() = selected_dir.clone();
                 }
 
-                list_store.clear();
-                populate_list_store(&list_store, &*cd_directory_clone.borrow_mut());
+                cd_list_store_clone.clear();
+                populate_list_store(&cd_list_store_clone, &*cd_directory_clone.borrow_mut());
             } else {
                 // Open the file
                 /// FIX CODE
@@ -328,15 +330,16 @@ fn main() {
                 // Check if path is Some
                 if let Some(path) = path {
                     let (menu, menu_items) = create_context_menu();
+                    let mut elem_path = String::new();
 
                     if let Some(iter) = menu_list_store_clone1.get_iter(&path) {
                         let file_name = menu_list_store_clone1.get_value(&iter, 0).get::<String>().unwrap_or_default();
-                        let elem_path = format!("{}/{}", *menu_directory_clone.borrow(), file_name.unwrap_or_default());
+                        elem_path = format!("{}/{}", *menu_directory_clone.borrow(), file_name.unwrap_or_default());
                     }
 
                     // Connect signals for each menu item
                     for item in &menu_items {
-                        connect_menu_item_signals(item);
+                        connect_menu_item_signals(item, elem_path.clone());
                     }
 
                     // Get the mouse position
@@ -411,7 +414,7 @@ fn main() {
     }
 
     // Connect menu items to actions
-    fn connect_menu_item_signals(menu_item: &gtk::MenuItem) {
+    fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String) {
         // Clone the menu item for use in the closure
         let menu_item_clone = menu_item.clone();
 
