@@ -418,6 +418,7 @@ fn main() {
     fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String, search_entries: Rc<>) {
         // Clone the menu item for use in the closure
         let menu_item_clone = menu_item.clone();
+        let path_clone = path.clone();
 
         // Connect the 'activate' signal to the closure
         menu_item.connect_activate(move |_| {
@@ -432,11 +433,11 @@ fn main() {
                     println!("Cut pressed")
                 }
                 "Delete" => {
-                    if let Ok(metadata) = fs::metadata(path) {
+                    if let Ok(metadata) = fs::metadata(&path_clone) {
                         if metadata.is_dir() {
-                            remove_dir(&path);
+                            remove_dir(&path_clone);
                         } else if metadata.is_file() {
-                            remove_file(&path);
+                            remove_file(&path_clone);
                         } else {
                             println!("It's neither a file nor a directory!");
                         }
