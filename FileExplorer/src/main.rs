@@ -415,7 +415,7 @@ fn main() {
     }
 
     // Connect menu items to actions
-    fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String, search_entries: Rc<>) {
+    fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String) {
         // Clone the menu item for use in the closure
         let menu_item_clone = menu_item.clone();
         let path_clone = path.clone();
