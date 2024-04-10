@@ -21,6 +21,7 @@ fn main() {
 
 // ALGORITHMS
     println!("Indexing all files");
+    //let search_files = indexing::index_files_libc("/Users/ilianus/");
     let search_files = indexing::index_files_fs("/home/");
 
 // UI
@@ -321,10 +322,12 @@ fn main() {
    // MENU
     let menu_tree_view_clone = tree_view.clone();
     let menu_list_store_clone = list_store.clone();
+    let connect_menu_list_store_clone = list_store.clone();
     let menu_directory_clone = Rc::clone(&current_directory);
 
     tree_view.connect_button_press_event(move |_, event| {
         let menu_list_store_clone1 = menu_list_store_clone.clone(); // Clone list_store
+        let connect_menu_list_store_clone1 = connect_menu_list_store_clone.clone();
 
         if event.get_button() == 3 { // Right mouse button
             if let Some((path, _, _, _)) = menu_tree_view_clone.get_path_at_pos(event.get_position().0 as i32, event.get_position().1 as i32) {
@@ -340,7 +343,7 @@ fn main() {
 
                     // Connect signals for each menu item
                     for item in &menu_items {
-                        connect_menu_item_signals(item, elem_path.clone());
+                        connect_menu_item_signals(item, elem_path.clone(), &connect_menu_list_store_clone1);
                     }
 
                     // Get the mouse position
@@ -415,10 +418,12 @@ fn main() {
     }
 
     // Connect menu items to actions
-    fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String) {
+    fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String, list_store: &gtk::ListStore) {
         // Clone the menu item for use in the closure
         let menu_item_clone = menu_item.clone();
         let path_clone = path.clone();
+        let update_list_store_path = path.clone();
+        let list_store_clone = list_store.clone();
 
         // Connect the 'activate' signal to the closure
         menu_item.connect_activate(move |_| {
@@ -442,6 +447,12 @@ fn main() {
                             println!("It's neither a file nor a directory!");
                         }
                     }
+
+                    list_store_clone.clear();
+                    let mut components: Vec<_> = update_list_store_path.split('/').collect();
+                    components.pop();
+                    let new_path = components.join("/");
+                    populate_list_store(&list_store_clone, &new_path);
                 }
                 "Compress" => {
                     let mut output_file = path.clone();
@@ -459,6 +470,12 @@ fn main() {
                     }
                     else {println!("File not found");}
 
+                    list_store_clone.clear();
+                    let mut components: Vec<_> = update_list_store_path.split('/').collect();
+                    components.pop();
+                    let new_path = components.join("/");
+                    populate_list_store(&list_store_clone, &new_path);
+
                 }
                 "Decompress" => {
                     let output_file = path.clone();
@@ -472,6 +489,12 @@ fn main() {
                     else {
                         println!("Not a .zip file");
                     }
+
+                    list_store_clone.clear();
+                    let mut components: Vec<_> = update_list_store_path.split('/').collect();
+                    components.pop();
+                    let new_path = components.join("/");
+                    populate_list_store(&list_store_clone, &new_path);
                 },
 
 
