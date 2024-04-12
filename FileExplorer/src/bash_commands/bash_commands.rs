@@ -1,6 +1,8 @@
 use std::fs;
 use std::io;
 use std::env;
+use std::path::Path;
+use fs_extra::dir::{self, CopyOptions};
 
 //     GLOBAL
 // CHANGE DIRECTORY
@@ -10,8 +12,6 @@ pub fn change_d(path:&str){
         return;
     }
 }
-
-
 
 //     DIRECTORY
 // CREATE DIRECTORY
@@ -30,13 +30,16 @@ pub fn remove_dir(path:&str){
     }
 }
 
+pub fn copy_dir(src: &str, dst: &str) {
+    if let Err(err) = dir::copy(src, dst, &CopyOptions::new()) {
+        eprintln!("Error copying directory: {}", err);
+    }
+}
+
 
 
 //     FILE
 // CREATE FILE
-pub fn create_file(path:&str, name:&str){
-    todo!();
-}
 
 // REMOVE FILE
 pub fn remove_file(path: &str){
@@ -57,9 +60,4 @@ pub fn copy_file(src: &str, dst: &str) {
     if let Err(err) = fs::copy(src, dst) {
         eprintln!("Error copying file: {}", err)
     }
-}
-
-// FILE METADATA
-pub fn metadata(path:&str, name:&str){
-    todo!();
 }

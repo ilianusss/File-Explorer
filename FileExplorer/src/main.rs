@@ -18,6 +18,7 @@ use FileExplorer::bash_commands::bash_commands::*;
 use FileExplorer::algorithms::*;
 
 fn main() {
+    //copy_dir("/Users/ilianus/Desktop/EPITA/S4/PROJET/test/NOUVO", "/Users/ilianus/Desktop/EPITA/S4/PROJET/test/c");
 
 // ALGORITHMS
     println!("Indexing all files");
@@ -197,13 +198,32 @@ fn main() {
             let src = format!("{}/{}", res, item_name);
             let dst = format!("{}/{}", paste_button_actual_dir_clone.borrow().clone(), item_name);
 
+            let metadata_src_clone = src.clone();
+
             match paste_type.as_str() {
                 "COPY" => {
-                    copy_file(&src, &dst);
+                    if let Ok(metadata) = fs::metadata(&metadata_src_clone) {
+                        if metadata.is_dir() {
+                            copy_dir(&src, &paste_button_actual_dir_clone.borrow().clone());
+                        } else if metadata.is_file() {
+                            copy_file(&src, &dst);
+                        } else {
+                            println!("It's neither a file nor a directory!");
+                        }
+                    }
                 }
                 "CUT" => {
-                    copy_file(&src, &dst);
-                    remove_file(&src);
+                    if let Ok(metadata) = fs::metadata(&metadata_src_clone) {
+                        if metadata.is_dir() {
+                            copy_dir(&src, &paste_button_actual_dir_clone.borrow().clone());
+                            remove_dir(&src);
+                        } else if metadata.is_file() {
+                            copy_file(&src, &dst);
+                            remove_dir(&src);
+                        } else {
+                            println!("It's neither a file nor a directory!");
+                        }
+                    }
                 }
                 _ => println!("error")
             }
