@@ -19,6 +19,8 @@ use FileExplorer::algorithms::*;
 
 fn main() {
 
+    //copy_file("/Users/ilianus/Desktop/EPITA/S4/PROJET/test/dupliquer.txt", "/Users/ilianus/Desktop/EPITA/S4/PROJET/test/dupliquer2.txt");
+
 // ALGORITHMS
     println!("Indexing all files");
     //let search_files = indexing::index_files_libc("/Users/ilianus/");
@@ -31,6 +33,9 @@ fn main() {
     if let Ok(current_dir) = env::current_dir() {
         *current_directory.borrow_mut() = current_dir.to_string_lossy().to_string();
     }
+
+    // Initialize paste param
+    let mut paste_directory = Rc::new(RefCell::new(String::new()));
     
     // Initialize search mode variable
     let search_mode = Rc::new(RefCell::new(false));
@@ -180,9 +185,35 @@ fn main() {
 
 
    // Paste button
+    let mut paste_path_clone = Rc::clone(&paste_directory);
+    let paste_button_list_store_clone = Rc::new(RefCell::new(list_store.clone()));
+    let paste_button_actual_dir_clone = Rc::clone(&current_directory);
+
     paste_button.connect_clicked(move |_| {
-        /// IMPLEMENT CODE
-        println!("Paste button clicked!");
+        let str_paste_path_clone = paste_path_clone.borrow().clone();
+        if !str_paste_path_clone.is_empty() {
+            let mut splitted: Vec<_> = str_paste_path_clone.split('/').collect();
+            let paste_type = splitted.pop().unwrap_or_default().to_string();
+            let item_name = splitted.pop().unwrap_or_default().to_string();
+            let mut res = splitted.join("/");
+            let src = format!("{}/{}", res, item_name);
+            let dst = format!("{}/{}", paste_button_actual_dir_clone.borrow().clone(), item_name);
+
+            match paste_type.as_str() {
+                "COPY" => {
+                    copy_file(&src, &dst);
+                }
+                "CUT" => {
+                    copy_file(&src, &dst);
+                    remove_file(&src);
+                }
+                _ => println!("error")
+            }
+
+            paste_button_list_store_clone.borrow_mut().clear();
+            let list_store_ref = paste_button_list_store_clone.borrow();
+            populate_list_store(&list_store_ref, &paste_button_actual_dir_clone.borrow());
+        }
     });
 
 
@@ -333,7 +364,22 @@ fn main() {
             if let Some((path, _, _, _)) = menu_tree_view_clone.get_path_at_pos(event.get_position().0 as i32, event.get_position().1 as i32) {
                 // Check if path is Some
                 if let Some(path) = path {
-                    let (menu, menu_items) = create_context_menu();
+                    let menu = gtk::Menu::new();
+
+                    // Create menu items for common actions
+                    let copy_item = gtk::MenuItem::with_label("Copy");
+                    let cut_item = gtk::MenuItem::with_label("Cut");
+                    let delete_item = gtk::MenuItem::with_label("Delete");
+                    let compress_item = gtk::MenuItem::with_label("Compress");
+                    let decompress_item = gtk::MenuItem::with_label("Decompress");
+
+                    // Append menu items to the menu
+                    menu.append(&copy_item);
+                    menu.append(&cut_item);
+                    menu.append(&delete_item);
+                    menu.append(&compress_item);
+                    menu.append(&decompress_item);
+                    
                     let mut elem_path = String::new();
 
                     if let Some(iter) = menu_list_store_clone1.get_iter(&path) {
@@ -341,10 +387,21 @@ fn main() {
                         elem_path = format!("{}/{}", *menu_directory_clone.borrow(), file_name.unwrap_or_default());
                     }
 
-                    // Connect signals for each menu item
-                    for item in &menu_items {
-                        connect_menu_item_signals(item, elem_path.clone(), &connect_menu_list_store_clone1);
-                    }
+                    connect_menu_item_signals(&delete_item, elem_path.clone(), &connect_menu_list_store_clone1);
+                    connect_menu_item_signals(&compress_item, elem_path.clone(), &connect_menu_list_store_clone1);
+                    connect_menu_item_signals(&decompress_item, elem_path.clone(), &connect_menu_list_store_clone1);
+
+                    let mut copy_paste_path_clone = Rc::clone(&paste_directory);
+                    let copy_act_path_clone = elem_path.clone();
+                    copy_item.connect_activate(move |_| {
+                        *copy_paste_path_clone.borrow_mut() = format!("{}/COPY",&copy_act_path_clone);
+                    });
+
+                    let mut cut_paste_path_clone = Rc::clone(&paste_directory);
+                    let cut_act_path_clone = elem_path.clone();
+                    cut_item.connect_activate(move |_| {
+                        *cut_paste_path_clone.borrow_mut() = format!("{}/CUT",&cut_act_path_clone);
+                    });
 
                     // Get the mouse position
                     let (x, y) = event.get_position();
@@ -387,36 +444,6 @@ fn main() {
 
 // FUNCTIONS
   // MENUS
-
-    // Create menu
-    fn create_context_menu() -> (gtk::Menu,Vec<gtk::MenuItem>) {
-        let menu = gtk::Menu::new();
-        let mut menu_items = Vec::new();
-
-        // Create menu items for common actions
-        let copy_item = gtk::MenuItem::with_label("Copy");
-        let cut_item = gtk::MenuItem::with_label("Cut");
-        let delete_item = gtk::MenuItem::with_label("Delete");
-        let compress_item = gtk::MenuItem::with_label("Compress");
-        let decompress_item = gtk::MenuItem::with_label("Decompress");
-
-        // Add to vector
-        menu_items.push(copy_item.clone());
-        menu_items.push(cut_item.clone());
-        menu_items.push(delete_item.clone());
-        menu_items.push(compress_item.clone());
-        menu_items.push(decompress_item.clone());
-
-        // Append menu items to the menu
-        menu.append(&copy_item);
-        menu.append(&cut_item);
-        menu.append(&delete_item);
-        menu.append(&compress_item);
-        menu.append(&decompress_item);
-
-        (menu,menu_items)
-    }
-
     // Connect menu items to actions
     fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String, list_store: &gtk::ListStore) {
         // Clone the menu item for use in the closure
@@ -429,14 +456,6 @@ fn main() {
         menu_item.connect_activate(move |_| {
             // Check which menu item was activated
             match menu_item_clone.get_label().unwrap().as_str() {
-                "Copy" => {
-                    // Perform deletion of the file
-                    println!("Copy pressed")
-                }
-                "Cut" => {
-                    // Perform deletion of the file
-                    println!("Cut pressed")
-                }
                 "Delete" => {
                     if let Ok(metadata) = fs::metadata(&path_clone) {
                         if metadata.is_dir() {

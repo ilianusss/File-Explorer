@@ -1,4 +1,5 @@
 use std::fs;
+use std::io;
 use std::env;
 
 //     GLOBAL
@@ -49,6 +50,12 @@ pub fn remove_file(path: &str){
 pub fn rename(current_name:&str, new_name:&str){
     if let Err(err) = fs::rename(current_name, new_name) {
         eprintln!("Error renaming file: {}", err);
+    }
+}
+
+pub fn copy_file(src: &str, dst: &str) {
+    if let Err(err) = fs::copy(src, dst) {
+        eprintln!("Error copying file: {}", err)
     }
 }
 
