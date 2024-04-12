@@ -19,8 +19,6 @@ use FileExplorer::algorithms::*;
 
 fn main() {
 
-    //copy_file("/Users/ilianus/Desktop/EPITA/S4/PROJET/test/dupliquer.txt", "/Users/ilianus/Desktop/EPITA/S4/PROJET/test/dupliquer2.txt");
-
 // ALGORITHMS
     println!("Indexing all files");
     //let search_files = indexing::index_files_libc("/Users/ilianus/");
@@ -370,6 +368,7 @@ fn main() {
                     let copy_item = gtk::MenuItem::with_label("Copy");
                     let cut_item = gtk::MenuItem::with_label("Cut");
                     let delete_item = gtk::MenuItem::with_label("Delete");
+                    let duplicate_item = gtk::MenuItem::with_label("Duplicate");
                     let compress_item = gtk::MenuItem::with_label("Compress");
                     let decompress_item = gtk::MenuItem::with_label("Decompress");
 
@@ -377,9 +376,10 @@ fn main() {
                     menu.append(&copy_item);
                     menu.append(&cut_item);
                     menu.append(&delete_item);
+                    //menu.append(&duplicate_item);
                     menu.append(&compress_item);
                     menu.append(&decompress_item);
-                    
+
                     let mut elem_path = String::new();
 
                     if let Some(iter) = menu_list_store_clone1.get_iter(&path) {
@@ -388,6 +388,7 @@ fn main() {
                     }
 
                     connect_menu_item_signals(&delete_item, elem_path.clone(), &connect_menu_list_store_clone1);
+                    //connect_menu_item_signals(&duplicate_item, elem_path.clone(), &connect_menu_list_store_clone1);
                     connect_menu_item_signals(&compress_item, elem_path.clone(), &connect_menu_list_store_clone1);
                     connect_menu_item_signals(&decompress_item, elem_path.clone(), &connect_menu_list_store_clone1);
 
@@ -473,6 +474,26 @@ fn main() {
                     let new_path = components.join("/");
                     populate_list_store(&list_store_clone, &new_path);
                 }
+                /*"Duplicate" => {
+                    let duplicate_path_clone = path.clone();
+                    let dst = format!("{}(1)",duplicate_path_clone);
+
+                    if let Ok(metadata) = fs::metadata(&path_clone) {
+                        if metadata.is_dir() {
+                            ();
+                        } else if metadata.is_file() {
+                            copy_file(&path_clone, &dst);
+                        } else {
+                            println!("It's neither a file nor a directory!");
+                        }
+                    }
+
+                    list_store_clone.clear();
+                    let mut components: Vec<_> = update_list_store_path.split('/').collect();
+                    components.pop();
+                    let new_path = components.join("/");
+                    populate_list_store(&list_store_clone, &new_path);
+                }*/
                 "Compress" => {
                     let mut output_file = path.clone();
                     if let Ok(metadata) = fs::metadata(output_file.as_str()) {
