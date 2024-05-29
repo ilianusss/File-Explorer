@@ -5,7 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="31a097b8-aea0-4350-ad7d-7d52665d71c4" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../DEMO/useless_file.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Documents/Soutenance1/Grille de notation1.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Documents/Soutenance1/Plan1.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Documents/Soutenance1/Présentation1.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Documents/Soutenance1/Rapport1.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Documents/Soutenance2/Grille de notation2.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Documents/Soutenance2/Plan2.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Documents/Soutenance2/Présentation2.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Documents/Soutenance2/Rapport2.pdf" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
     </list>
@@ -67,6 +74,9 @@
       <workItem from="1712579205089" duration="1259000" />
       <workItem from="1712653495256" duration="339000" />
       <workItem from="1712678047557" duration="880000" />
+      <workItem from="1716892681526" duration="669000" />
+      <workItem from="1716973745746" duration="1392000" />
+      <workItem from="1716985008468" duration="390000" />
     </task>
     <servers />
   </component>

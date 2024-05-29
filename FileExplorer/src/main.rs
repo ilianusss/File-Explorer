@@ -9,6 +9,7 @@ use glib::{MainContext, clone};
 use chrono::{DateTime, Local};
 use std::rc::Rc;
 use std::fs::DirEntry;
+use std::process::Command;
 
 
 //BASH COMMANDS
@@ -391,6 +392,7 @@ fn main() {
                     let duplicate_item = gtk::MenuItem::with_label("Duplicate");
                     let compress_item = gtk::MenuItem::with_label("Compress");
                     let decompress_item = gtk::MenuItem::with_label("Decompress");
+                    let open_terminal_item = gtk::MenuItem::with_label("Open terminal");
 
                     // Append menu items to the menu
                     menu.append(&copy_item);
@@ -399,6 +401,7 @@ fn main() {
                     //menu.append(&duplicate_item);
                     menu.append(&compress_item);
                     menu.append(&decompress_item);
+                    menu.append(&open_terminal_item);
 
                     let mut elem_path = String::new();
 
@@ -411,6 +414,7 @@ fn main() {
                     //connect_menu_item_signals(&duplicate_item, elem_path.clone(), &connect_menu_list_store_clone1);
                     connect_menu_item_signals(&compress_item, elem_path.clone(), &connect_menu_list_store_clone1);
                     connect_menu_item_signals(&decompress_item, elem_path.clone(), &connect_menu_list_store_clone1);
+                    connect_menu_item_signals(&open_terminal_item, elem_path.clone(), &connect_menu_list_store_clone1);
 
                     let mut copy_paste_path_clone = Rc::clone(&paste_directory);
                     let copy_act_path_clone = elem_path.clone();
@@ -555,9 +559,25 @@ fn main() {
                     components.pop();
                     let new_path = components.join("/");
                     populate_list_store(&list_store_clone, &new_path);
-                },
+                }
+                "Open terminal" => {
+                    if let Ok(metadata) = fs::metadata(&path_clone) {
+                        if metadata.is_dir() {
+                            let term_dir = path.clone();
+                            let result = Command::new("open")
+                                .arg("-a")
+                                .arg("Terminal")
+                                .arg(term_dir)
+                                .status();
 
-
+                            match result {
+                                Ok(status) if status.success() => println!("Terminal launched successfully in /Users directory"),
+                                Ok(status) => eprintln!("Terminal exited with status: {}", status),
+                                Err(err) => eprintln!("Failed to launch terminal: {}", err),
+                            }
+                        }
+                    }
+                }
                 _ => {
                     // Implement other actions if needed
                     println!("Menu item '{}' activated", menu_item_clone.get_label().unwrap());
