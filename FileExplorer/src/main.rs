@@ -4,7 +4,7 @@ use std::{env, fs, path::Path, ffi::OsStr, cell::RefCell, time::{Duration, Syste
 use gio::prelude::*;
 use gio::{SettingsExt, AppInfo, AppInfoCreateFlags, AppLaunchContext, File, FileExt, AppLaunchContext as GioAppLaunchContext};
 use gtk::prelude::*;
-use gtk::{Application, Box, Orientation, ScrolledWindow, ListStore, TreeViewColumn, CellRendererText, Entry, Button, Label, SettingsExt as OtherSettingsExt, Window, WindowType};
+use gtk::{Application, Box, Orientation, GtkWindowExt, ToolButtonExt, ScrolledWindow, ListStore, TreeViewColumn, CellRendererText, Entry, Button, Label, SettingsExt as OtherSettingsExt, Window, WindowType};
 use glib::{MainContext, clone};
 use chrono::{DateTime, Local};
 use std::rc::Rc;
@@ -19,7 +19,19 @@ use FileExplorer::bash_commands::bash_commands::*;
 use FileExplorer::algorithms::*;
 
 fn main() {
-    //copy_dir("/Users/ilianus/Desktop/EPITA/S4/PROJET/test/NOUVO", "/Users/ilianus/Desktop/EPITA/S4/PROJET/test/c");
+    // UI
+    let app = gtk::ApplicationBuilder::new()
+        .application_id("s4.FileExplorer")
+        .build();
+
+    app.connect_activate(build_ui);
+    app.run(&[]);
+}
+
+
+// build_ui
+fn build_ui(app: &Application) {
+        //copy_dir("/Users/ilianus/Desktop/EPITA/S4/PROJET/test/NOUVO", "/Users/ilianus/Desktop/EPITA/S4/PROJET/test/c");
 
 // ALGORITHMS
     println!("Indexing all files");
@@ -68,13 +80,43 @@ fn main() {
 
 
   // HEADER
-    let header_bar = gtk::Box::new(Orientation::Horizontal, 25);
+    let header_bar = gtk::HeaderBarBuilder::new().title("File Explorer").build();
+    window.set_titlebar(Some(&header_bar));
     let current_directory_label = Label::new(Some(&*current_directory.borrow()));
     let time_label = Label::new(None);
 
-    header_bar.pack_start(&time_label, false, false, 0);
-    header_bar.pack_start(&current_directory_label, false, false, 0);
+    header_bar.pack_start(&time_label);
+    header_bar.pack_start(&current_directory_label);
     vbox.pack_start(&header_bar, false, false, 0);
+
+    // Adding a search button to the header
+    let search_button = gtk::ToggleButton::with_label("Search");
+    header_bar.pack_end(&search_button);
+
+    // Creating a search bar
+    let search_bar = gtk::SearchBarBuilder::new()
+        .build();
+    vbox.add(&search_bar);
+
+    // Binding the search button's state to the search bar's search-mode-enabled property
+    search_button
+        .bind_property("active", &search_bar, "search-mode-enabled")
+        .build();
+
+    // Creating an entry inside the search bar
+    let entry = gtk::SearchEntry::new();
+    entry.set_hexpand(true);
+    //search_bar.add(&entry);
+
+    /* 
+    // Connecting search-related signals
+    entry.connect_search_started(clone!(@weak search_button => move |_| {
+        search_button.set_active(true);
+    }));
+
+    entry.connect_stop_search(clone!(@weak search_button => move |_| {
+        search_button.set_active(false);
+    }));*/
 
     // Initialize time label
     update_time_label(&time_label);
@@ -93,17 +135,18 @@ fn main() {
     let new_button = Button::with_label("NEW");
     let paste_button = Button::with_label("Paste");
     let search_button = Button::with_label("Search");
-    let search_bar = gtk::Box::new(Orientation::Horizontal, 5);
+    let search = gtk::Box::new(Orientation::Horizontal, 5);
     let search_entry = Entry::new();
-    search_bar.pack_start(&search_entry, true, true, 0);
+    search.pack_start(&search_entry, true, true, 0);
 
     option_bar.pack_start(&new_button, false, false, 0);
     option_bar.pack_start(&paste_button, false, false, 0);
-    option_bar.pack_start(&search_bar, true, true, 0);
+    option_bar.pack_start(&search, true, true, 0);
     option_bar.pack_end(&search_button, false, false, 0);
+    search_bar.add(&option_bar);
 
     // Add the option bar to the vbox
-    vbox.pack_start(&option_bar, false, false, 0);
+    //vbox.pack_start(&option_bar, false, false, 0);
 
     // New directory bar
     let new_dir_bar = gtk::Box::new(Orientation::Horizontal, 5);
@@ -463,9 +506,7 @@ fn main() {
 
     // Start GTK main loop
     gtk::main();
-}
-
-
+    }
 
 // FUNCTIONS
   // MENUS

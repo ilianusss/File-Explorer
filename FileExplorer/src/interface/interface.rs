@@ -1,11 +1,13 @@
 use std::{env, fs, path::Path, ffi::OsStr, cell::RefCell, time::{Duration, SystemTime, UNIX_EPOCH}};
 use gio::prelude::*;
 use gio::{SettingsExt, AppInfo, AppInfoCreateFlags, AppLaunchContext, File, FileExt, AppLaunchContext as GioAppLaunchContext};
-use gtk::prelude::*;
+use gtk::{prelude::*, subclass::application};
 use gtk::{Application, Box, Orientation, ScrolledWindow, ListStore, TreeViewColumn, CellRendererText, Entry, Button, Label, SettingsExt as OtherSettingsExt, Window, WindowType};
 use glib::{MainContext, clone};
 use chrono::{DateTime, Local};
 use std::rc::Rc;
+
+
 
 // HEADER
     // Time Format
