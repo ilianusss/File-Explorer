@@ -2,13 +2,14 @@
 use FileExplorer::interface::interface::*;
 use std::{env, fs, path::Path, ffi::OsStr, cell::RefCell, time::{Duration, SystemTime, UNIX_EPOCH}};
 use gio::prelude::*;
-use gio::{SettingsExt, AppInfo, AppInfoCreateFlags, AppLaunchContext, File, FileExt, AppLaunchContext as GioAppLaunchContext};
+use gio::{SettingsExt, AppInfo, AppInfoCreateFlags, AppLaunchContext, FileExt, AppLaunchContext as GioAppLaunchContext};
 use gtk::prelude::*;
 use gtk::{Application, Box, Orientation, ScrolledWindow, ListStore, TreeViewColumn, CellRendererText, Entry, Button, Label, SettingsExt as OtherSettingsExt, Window, WindowType, CheckButton, ToggleButtonExt};
 use glib::{MainContext, clone};
 use chrono::{DateTime, Local};
 use std::rc::Rc;
-use std::fs::DirEntry;
+use std::fs::File;
+use std::io::{self, BufReader, Read};
 use std::process::Command;
 
 
@@ -434,12 +435,32 @@ fn build_ui(app: &Application) {
                 let show_hidden_value = *cd_show_hidden_clone.borrow();
                 populate_list_store(&cd_list_store_clone, &*cd_directory_clone.borrow_mut(), show_hidden_value);
             } else {
-                // Open the file
-                /// FIX CODE
-                let file_path = format!("{}/{}", *cd_directory_clone.borrow(), file_name.unwrap_or_default());
-                if let Err(err) = open_file(&file_path) {
-                    eprintln!("Failed to open file: {}", err);
-                }
+                let application = gtk::ApplicationBuilder::new()
+                        .application_id("FileReader")
+                        .build();
+            
+                application.connect_activate(|app2| {
+                    let file_name = "/home/saba/Desktop/Epita/ProjetS4/S4_File-Explorer/FileExplorer/test.txt";
+
+                    let contents = match read_file_to_string(&file_name) {
+                        Ok(text) => text,
+                        Err(err) => {
+                            eprintln!("Error reading file: {}", err);
+                            String::from("Failed to read file")
+                        }
+                    };
+
+                    let window2 = gtk::ApplicationWindow::new(app2);
+                    window2.set_title("File Reader");
+                    window2.set_default_size(600, 400);
+
+                    let label = Label::new(Some(&contents));
+                    window2.add(&label);
+
+                    window2.show();
+                });
+                application.run(&[]);
+                
             }
         }
     });
@@ -664,4 +685,13 @@ fn build_ui(app: &Application) {
             }
         });
     }
+    
+    fn read_file_to_string(filename: &str) -> io::Result<String> {
+        let file = File::open(filename)?;
+        let mut reader = BufReader::new(file);
+        let mut contents = String::new();
+        reader.read_to_string(&mut contents)?;
+        Ok(contents)
+    }
+    
 
