@@ -94,14 +94,10 @@ fn build_ui(app: &Application) {
     header_bar.pack_end(&search_button);
 
     // Creating a search bar
-    let search_bar = gtk::SearchBarBuilder::new()
-        .build();
-    vbox.add(&search_bar);
+    let search_bar = gtk::Box::new(Orientation::Horizontal, 5);
 
     // Binding the search button's state to the search bar's search-mode-enabled property
-    search_button
-        .bind_property("active", &search_bar, "search-mode-enabled")
-        .build();
+    
 
     // Creating an entry inside the search bar
     let entry = gtk::SearchEntry::new();
@@ -130,21 +126,28 @@ fn build_ui(app: &Application) {
 
 
   // OPTION BAR
-    let option_bar = gtk::Box::new(Orientation::Horizontal, 5);
 
     let new_button = Button::with_label("NEW");
     let paste_button = Button::with_label("Paste");
-    let search_button = Button::with_label("Search");
+    let search_ok_button = Button::with_label("Search");
     let search = gtk::Box::new(Orientation::Horizontal, 5);
     let search_entry = Entry::new();
     search.pack_start(&search_entry, true, true, 0);
 
     header_bar.pack_end(&new_button);
     header_bar.pack_end(&paste_button);
-    option_bar.pack_start(&search, true, true, 0);
-    option_bar.pack_end(&search_button, false, false, 0);
-    search_bar.add(&option_bar);
-    option_bar.set_hexpand(true);
+    search_bar.pack_start(&search, true, true, 0);
+    search_bar.pack_end(&search_ok_button, false, false, 0);
+    
+    // Create a revealer for smooth animation
+    let search_revealer = Rc::new(RefCell::new(gtk::Revealer::new()));
+    search_revealer.borrow().add(&search_bar);
+    search_revealer.borrow().set_transition_type(gtk::RevealerTransitionType::SlideDown);
+    search_revealer.borrow().set_transition_duration(500);
+    search_revealer.borrow().set_reveal_child(false);
+    vbox.pack_start(&search_revealer.borrow().clone().upcast::<gtk::Widget>(), false, false, 0);
+
+    search_bar.set_hexpand(true);
 
     // Add the option bar to the vbox
     //vbox.pack_start(&option_bar, false, false, 0);
@@ -156,7 +159,7 @@ fn build_ui(app: &Application) {
     let new_dir_ok_button = Button::with_label("Enter");
 
     new_dir_bar.pack_start(&new_dir_enter_bar_entry, true, true, 0);
-    new_dir_bar.pack_end(&new_dir_ok_button, true, true, 0);
+    new_dir_bar.pack_end(&new_dir_ok_button, false, true, 0);
 
     // Create a revealer for smooth animation
     let revealer = Rc::new(RefCell::new(gtk::Revealer::new()));
@@ -202,6 +205,13 @@ fn build_ui(app: &Application) {
 
 
   // CONNECT UI TO ACTIONS
+    // reveal search button
+    let search_revealer_clone1 = Rc::clone(&search_revealer);
+
+    search_button.connect_clicked(move |_| {
+        let is_revealed = search_revealer_clone1.borrow().get_reveal_child();
+        search_revealer_clone1.borrow_mut().set_reveal_child(!is_revealed);
+    });
    // New directory button
     let new_dir_directory_clone = Rc::clone(&current_directory);
     let revealer_clone1 = Rc::clone(&revealer);
@@ -291,7 +301,7 @@ fn build_ui(app: &Application) {
     let list_store_clone = Rc::new(RefCell::new(list_store.clone()));
     let cd_directory_clone = Rc::clone(&current_directory);
 
-    search_button.connect_clicked(move |_| {
+    search_ok_button.connect_clicked(move |_| {
         let text = search_entry.get_text();
         if !text.is_empty() {
 
