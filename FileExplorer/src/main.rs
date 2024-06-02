@@ -80,7 +80,7 @@ fn build_ui(app: &Application) {
 
 
   // HEADER
-    let header_bar = gtk::HeaderBarBuilder::new().title("File Explorer").build();
+    let header_bar = gtk::HeaderBarBuilder::new().title("File Explorer").show_close_button(true).build();
     window.set_titlebar(Some(&header_bar));
     let current_directory_label = Label::new(Some(&*current_directory.borrow()));
     let time_label = Label::new(None);
@@ -139,14 +139,16 @@ fn build_ui(app: &Application) {
     let search_entry = Entry::new();
     search.pack_start(&search_entry, true, true, 0);
 
-    option_bar.pack_start(&new_button, false, false, 0);
-    option_bar.pack_start(&paste_button, false, false, 0);
+    header_bar.pack_end(&new_button);
+    header_bar.pack_end(&paste_button);
     option_bar.pack_start(&search, true, true, 0);
     option_bar.pack_end(&search_button, false, false, 0);
     search_bar.add(&option_bar);
+    option_bar.set_hexpand(true);
 
     // Add the option bar to the vbox
     //vbox.pack_start(&option_bar, false, false, 0);
+
 
     // New directory bar
     let new_dir_bar = gtk::Box::new(Orientation::Horizontal, 5);
