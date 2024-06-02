@@ -4,7 +4,7 @@ use std::{env, fs, path::Path, ffi::OsStr, cell::RefCell, time::{Duration, Syste
 use gio::prelude::*;
 use gio::{SettingsExt, AppInfo, AppInfoCreateFlags, AppLaunchContext, File, FileExt, AppLaunchContext as GioAppLaunchContext};
 use gtk::prelude::*;
-use gtk::{Application, Box, Orientation, GtkWindowExt, ToolButtonExt, ScrolledWindow, ListStore, TreeViewColumn, CellRendererText, Entry, Button, Label, SettingsExt as OtherSettingsExt, Window, WindowType};
+use gtk::{Application, Box, Orientation, ScrolledWindow, ListStore, TreeViewColumn, CellRendererText, Entry, Button, Label, SettingsExt as OtherSettingsExt, Window, WindowType, CheckButton, ToggleButtonExt};
 use glib::{MainContext, clone};
 use chrono::{DateTime, Local};
 use std::rc::Rc;
@@ -48,6 +48,9 @@ fn build_ui(app: &Application) {
 
     // Initialize paste param
     let mut paste_directory = Rc::new(RefCell::new(String::new()));
+
+    // Initialize show_hidden
+    let show_hidden = Rc::new(RefCell::new(false));
     
     // Initialize search mode variable
     let search_mode = Rc::new(RefCell::new(false));
@@ -126,7 +129,7 @@ fn build_ui(app: &Application) {
 
 
   // OPTION BAR
-
+    let show_hidden_check_button = CheckButton::with_label("Show hidden");
     let new_button = Button::with_label("NEW");
     let paste_button = Button::with_label("Paste");
     let search_ok_button = Button::with_label("Search");
@@ -134,6 +137,7 @@ fn build_ui(app: &Application) {
     let search_entry = Entry::new();
     search.pack_start(&search_entry, true, true, 0);
 
+    header_bar.pack_end(&show_hidden_check_button);
     header_bar.pack_end(&new_button);
     header_bar.pack_end(&paste_button);
     search_bar.pack_start(&search, true, true, 0);
@@ -183,7 +187,7 @@ fn build_ui(app: &Application) {
     //let list_store = gtk::ListStore::new(&[glib::Type::String, glib::Type::String, glib::Type::String, glib::Type::String]);
     let list_store = gtk::ListStore::new(&[glib::Type::String, glib::Type::String, glib::Type::String, glib::Type::String]);
     let dir_path = env::args().nth(1).unwrap_or_else(|| ".".to_string());
-    populate_list_store(&list_store, &dir_path);
+    populate_list_store(&list_store, &dir_path, false);
 
     // Tree view
     let tree_view = gtk::TreeView::new();
@@ -223,6 +227,7 @@ fn build_ui(app: &Application) {
         revealer_clone1.borrow_mut().set_reveal_child(!is_revealed);
     });
 
+    let new_directory_show_hidden_clone = show_hidden.clone();
     new_dir_ok_button.connect_clicked(move |_| {
         // Create new dir
         let new_dir_name = new_dir_enter_bar_entry.get_text().to_string();
@@ -235,7 +240,8 @@ fn build_ui(app: &Application) {
 
         list_store_clone.clear();
         let updated_dir = format!("{}", *new_dir_directory_clone.borrow());
-        populate_list_store(&list_store_clone, &updated_dir);
+        let show_hidden_value = *new_directory_show_hidden_clone.borrow();
+        populate_list_store(&list_store_clone, &updated_dir, show_hidden_value);
     });
 
 
@@ -243,6 +249,7 @@ fn build_ui(app: &Application) {
     let mut paste_path_clone = Rc::clone(&paste_directory);
     let paste_button_list_store_clone = Rc::new(RefCell::new(list_store.clone()));
     let paste_button_actual_dir_clone = Rc::clone(&current_directory);
+    let paste_button_show_hidden_clone = show_hidden.clone();
 
     paste_button.connect_clicked(move |_| {
         let str_paste_path_clone = paste_path_clone.borrow().clone();
@@ -286,11 +293,22 @@ fn build_ui(app: &Application) {
 
             paste_button_list_store_clone.borrow_mut().clear();
             let list_store_ref = paste_button_list_store_clone.borrow();
-            populate_list_store(&list_store_ref, &paste_button_actual_dir_clone.borrow());
+            let show_hidden_value = *paste_button_show_hidden_clone.borrow();
+            populate_list_store(&list_store_ref, &paste_button_actual_dir_clone.borrow(), show_hidden_value);
         }
     });
 
+    // SHOW HIDDEN CHECK BUTTON
+    let show_hidden_current_directory_clone = Rc::clone(&current_directory);
+    let show_hidden_list_store_clone = Rc::new(RefCell::new(list_store.clone()));
+    let show_hidden_show_hidden_clone = show_hidden.clone();
 
+    show_hidden_check_button.connect_toggled(move |btn| {
+        let show_hidden_show_hidden_clone = btn.get_active();
+        let list_store_ref = show_hidden_list_store_clone.borrow();
+        let dir_path = show_hidden_current_directory_clone.borrow();
+        populate_list_store(&list_store_ref, &show_hidden_current_directory_clone.borrow(), show_hidden_show_hidden_clone);
+    });
 
 
     // Search button
@@ -300,6 +318,7 @@ fn build_ui(app: &Application) {
     let search_mode_clone = Rc::clone(&search_mode);
     let list_store_clone = Rc::new(RefCell::new(list_store.clone()));
     let cd_directory_clone = Rc::clone(&current_directory);
+    let search_button_show_hidden = show_hidden.clone();
 
     search_ok_button.connect_clicked(move |_| {
         let text = search_entry.get_text();
@@ -364,8 +383,8 @@ fn build_ui(app: &Application) {
             *search_mode_clone.borrow_mut() = false;
             (*search_entries_clone.borrow_mut()).clear();
             *cd_directory_clone.borrow_mut() = String::from("/home");
-            // (Add current_directory_label modification)
-            populate_list_store(&*list_store_clone.borrow_mut(), &*cd_directory_clone.borrow_mut());
+            let show_hidden_value = *search_button_show_hidden.borrow();
+            populate_list_store(&*list_store_clone.borrow_mut(), &*cd_directory_clone.borrow_mut(), show_hidden_value);
         }
 
     });
@@ -376,6 +395,7 @@ fn build_ui(app: &Application) {
     let search_entries_clone = Rc::clone(&search_entries);
     let search_mode_clone = Rc::clone(&search_mode);
     let cd_list_store_clone = list_store.clone();
+    let cd_show_hidden_clone = show_hidden.clone();
 
     tree_view.connect_row_activated(move |_tree_view, path, _column| {
         if let Some(iter) = cd_list_store_clone.get_iter(path) {
@@ -411,7 +431,8 @@ fn build_ui(app: &Application) {
                 }
 
                 cd_list_store_clone.clear();
-                populate_list_store(&cd_list_store_clone, &*cd_directory_clone.borrow_mut());
+                let show_hidden_value = *cd_show_hidden_clone.borrow();
+                populate_list_store(&cd_list_store_clone, &*cd_directory_clone.borrow_mut(), show_hidden_value);
             } else {
                 // Open the file
                 /// FIX CODE
@@ -429,6 +450,7 @@ fn build_ui(app: &Application) {
     let menu_list_store_clone = list_store.clone();
     let connect_menu_list_store_clone = list_store.clone();
     let menu_directory_clone = Rc::clone(&current_directory);
+    let menu_show_hidden_clone = show_hidden.clone();
 
     tree_view.connect_button_press_event(move |_, event| {
         let menu_list_store_clone1 = menu_list_store_clone.clone(); // Clone list_store
@@ -465,11 +487,11 @@ fn build_ui(app: &Application) {
                         elem_path = format!("{}/{}", *menu_directory_clone.borrow(), file_name.unwrap_or_default());
                     }
 
-                    connect_menu_item_signals(&delete_item, elem_path.clone(), &connect_menu_list_store_clone1);
+                    connect_menu_item_signals(&delete_item, elem_path.clone(), &connect_menu_list_store_clone1, menu_show_hidden_clone.clone());
                     //connect_menu_item_signals(&duplicate_item, elem_path.clone(), &connect_menu_list_store_clone1);
-                    connect_menu_item_signals(&compress_item, elem_path.clone(), &connect_menu_list_store_clone1);
-                    connect_menu_item_signals(&decompress_item, elem_path.clone(), &connect_menu_list_store_clone1);
-                    connect_menu_item_signals(&open_terminal_item, elem_path.clone(), &connect_menu_list_store_clone1);
+                    connect_menu_item_signals(&compress_item, elem_path.clone(), &connect_menu_list_store_clone1, menu_show_hidden_clone.clone());
+                    connect_menu_item_signals(&decompress_item, elem_path.clone(), &connect_menu_list_store_clone1, menu_show_hidden_clone.clone());
+                    connect_menu_item_signals(&open_terminal_item, elem_path.clone(), &connect_menu_list_store_clone1, menu_show_hidden_clone.clone());
 
                     let mut copy_paste_path_clone = Rc::clone(&paste_directory);
                     let copy_act_path_clone = elem_path.clone();
@@ -523,12 +545,13 @@ fn build_ui(app: &Application) {
 // FUNCTIONS
   // MENUS
     // Connect menu items to actions
-    fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String, list_store: &gtk::ListStore) {
+    fn connect_menu_item_signals(menu_item: &gtk::MenuItem, path: String, list_store: &gtk::ListStore, show_hidden: Rc<RefCell<bool>>) {
         // Clone the menu item for use in the closure
         let menu_item_clone = menu_item.clone();
         let path_clone = path.clone();
         let update_list_store_path = path.clone();
         let list_store_clone = list_store.clone();
+        let connect_show_hidden_clone = show_hidden.clone();
 
         // Connect the 'activate' signal to the closure
         menu_item.connect_activate(move |_| {
@@ -549,7 +572,8 @@ fn build_ui(app: &Application) {
                     let mut components: Vec<_> = update_list_store_path.split('/').collect();
                     components.pop();
                     let new_path = components.join("/");
-                    populate_list_store(&list_store_clone, &new_path);
+                    let show_hidden_ref = *connect_show_hidden_clone.borrow();
+                    populate_list_store(&list_store_clone, &new_path, show_hidden_ref);
                 }
                 /*"Duplicate" => {
                     let duplicate_path_clone = path.clone();
@@ -591,7 +615,8 @@ fn build_ui(app: &Application) {
                     let mut components: Vec<_> = update_list_store_path.split('/').collect();
                     components.pop();
                     let new_path = components.join("/");
-                    populate_list_store(&list_store_clone, &new_path);
+                    let show_hidden_ref = *connect_show_hidden_clone.borrow();
+                    populate_list_store(&list_store_clone, &new_path, show_hidden_ref);
 
                 }
                 "Decompress" => {
@@ -611,7 +636,8 @@ fn build_ui(app: &Application) {
                     let mut components: Vec<_> = update_list_store_path.split('/').collect();
                     components.pop();
                     let new_path = components.join("/");
-                    populate_list_store(&list_store_clone, &new_path);
+                    let show_hidden_ref = *connect_show_hidden_clone.borrow();
+                    populate_list_store(&list_store_clone, &new_path, show_hidden_ref);
                 }
                 "Open terminal" => {
                     if let Ok(metadata) = fs::metadata(&path_clone) {

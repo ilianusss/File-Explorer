@@ -53,7 +53,7 @@ pub fn add_column(tree_view: &gtk::TreeView, title: &str, col_id: i32) {
 
 
     // Populate a list store
-pub fn populate_list_store(list_store: &gtk::ListStore, dir_path: &str) {
+pub fn populate_list_store(list_store: &gtk::ListStore, dir_path: &str, show_hidden: bool) {
     // Clear the list store
     list_store.clear();
 
@@ -75,8 +75,14 @@ pub fn populate_list_store(list_store: &gtk::ListStore, dir_path: &str) {
             &[&"..".to_string(), &"Directory".to_string(), &"".to_string(), &"".to_string()],
         );
     }
+
     for entry in entries.iter() {
         if let Some(file_name) = entry.file_name().to_str() {
+            // Skip hidden files if show_hidden is false
+            if !show_hidden && file_name.starts_with('.') {
+                continue;
+            }
+
             let metadata = fs::metadata(entry.path()).ok();
             let file_type = get_file_type(&entry);
             let file_size = format_file_size(metadata.as_ref().map(|meta| meta.len()));
