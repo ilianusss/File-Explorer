@@ -210,6 +210,48 @@ fn build_ui(app: &Application) {
 
 
   // CONNECT UI TO ACTIONS
+    // about us button
+    let add_button = gtk::Button::with_label("More About Us");
+    add_button.set_margin_top(5);
+    add_button.set_margin_bottom(5);
+    vbox.add(&add_button);
+
+    add_button.connect_clicked(|add_button| {
+        let button = gtk::Button::with_label("About Us");
+
+        // Create window
+        let window2 = gtk::Window::new(gtk::WindowType::Toplevel);
+        window2.set_title("Groupe Alea2");
+        window2.set_default_size(500, 500);
+
+        // Create vbox
+        let vbox2 = gtk::Box::new(Orientation::Vertical, 10);
+
+        vbox2.add(&button);
+
+        window2.add(&vbox2);
+
+        button.connect_clicked(glib::clone!(@weak window2 => move |_| {
+            let dialog = gtk::AboutDialogBuilder::new()
+                .transient_for(&window2)
+                .modal(true)
+                .program_name("File Explorer")
+                .version("0.2.0")
+                .website_label("GTK-RS Website")
+                .website("https://gtk-rs.org/")
+                .authors(vec![
+                    "Tristan Faure".to_string(),
+                    "Iliane Formet".to_string(),
+                    "Arthur Garraud".to_string(),
+                ])
+                .visible(true)
+                .build();
+
+            dialog.present();
+        }));
+
+        window2.present();
+    });
     // reveal search button
     let search_revealer_clone1 = Rc::clone(&search_revealer);
 
@@ -435,31 +477,43 @@ fn build_ui(app: &Application) {
                 let show_hidden_value = *cd_show_hidden_clone.borrow();
                 populate_list_store(&cd_list_store_clone, &*cd_directory_clone.borrow_mut(), show_hidden_value);
             } else {
-                let application = gtk::ApplicationBuilder::new()
-                        .application_id("FileReader")
+                // Create window
+                let window2 = gtk::Window::new(gtk::WindowType::Toplevel);
+                window2.set_title(&file_name.unwrap());
+                window2.set_default_size(500, 500);
+
+                // Create vbox
+                let vbox2 = gtk::Box::new(Orientation::Vertical, 10);
+
+                // Margins
+                vbox2.set_margin_start(10);
+                vbox2.set_margin_end(10);
+                vbox2.set_margin_top(15);
+                vbox2.set_margin_bottom(10);
+
+                let button = gtk::Button::with_label("About Us");
+
+                window2.add(&vbox2);
+
+                button.connect_clicked(glib::clone!(@weak window2 => move |_| {
+                    let dialog = gtk::AboutDialogBuilder::new()
+                        .transient_for(&window2)
+                        .modal(true)
+                        .program_name("File Explorer")
+                        .version("0.2.0")
+                        .website("https://gtk-rs.org/")
+                        .authors(vec![
+                            "Tristan Faure".to_string(),
+                            "Iliane Formet".to_string(),
+                            "Arthur Garraud".to_string(),
+                        ])
                         .build();
-            
-                application.connect_activate(|app2| {
-                    let file_name = "/home/saba/Desktop/Epita/ProjetS4/S4_File-Explorer/FileExplorer/test.txt";
 
-                    let contents = match read_file_to_string(&file_name) {
-                        Ok(text) => text,
-                        Err(err) => {
-                            eprintln!("Error reading file: {}", err);
-                            String::from("Failed to read file")
-                        }
-                    };
+                    dialog.present();
+                }));
+                vbox2.add(&button);
 
-                    let window2 = gtk::ApplicationWindow::new(app2);
-                    window2.set_title("File Reader");
-                    window2.set_default_size(600, 400);
-
-                    let label = Label::new(Some(&contents));
-                    window2.add(&label);
-
-                    window2.show();
-                });
-                application.run(&[]);
+                window2.present();
                 
             }
         }
