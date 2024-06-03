@@ -3,7 +3,7 @@ use FileExplorer::interface::interface::*;
 use std::{env, fs, path::Path, ffi::OsStr, cell::RefCell, time::{Duration, SystemTime, UNIX_EPOCH}};
 use gio::prelude::*;
 use gio::{SettingsExt, AppInfo, AppInfoCreateFlags, AppLaunchContext, FileExt, AppLaunchContext as GioAppLaunchContext};
-use gtk::prelude::*;
+use gtk::{prelude::*, print_run_page_setup_dialog_async};
 use gtk::{Application, Box, Orientation, ScrolledWindow, ListStore, TreeViewColumn, CellRendererText, Entry, Button, Label, SettingsExt as OtherSettingsExt, Window, WindowType, CheckButton, ToggleButtonExt};
 use glib::{MainContext, clone};
 use chrono::{DateTime, Local};
@@ -227,7 +227,7 @@ fn build_ui(app: &Application) {
         // Create vbox
         let vbox2 = gtk::Box::new(Orientation::Vertical, 10);
 
-        vbox2.add(&button);
+        vbox2.pack_start(&button, false, false, 0);
 
         window2.add(&vbox2);
 
@@ -477,44 +477,33 @@ fn build_ui(app: &Application) {
                 let show_hidden_value = *cd_show_hidden_clone.borrow();
                 populate_list_store(&cd_list_store_clone, &*cd_directory_clone.borrow_mut(), show_hidden_value);
             } else {
-                // Create window
-                let window2 = gtk::Window::new(gtk::WindowType::Toplevel);
-                window2.set_title(&file_name.unwrap());
-                window2.set_default_size(500, 500);
+                let name = file_name.unwrap_or_default();
+                let extension = name.split('.').last().unwrap_or_default();
+                match extension {
+                    "txt"|"pdf"|"toml"|"doc"|"docx"|"xls"|"xlsx"|"lock"|"rs" => {
+                        let content = read_file_to_string(&format!("{}/{}", *cd_directory_clone.borrow(), name)).unwrap_or_default();
+                        let window_file = gtk::Window::new(gtk::WindowType::Toplevel);
+                        window_file.set_title(&name);
+                        window_file.set_default_size(500, 500);
 
-                // Create vbox
-                let vbox2 = gtk::Box::new(Orientation::Vertical, 10);
+                        let vbox_file = gtk::Box::new(Orientation::Vertical, 10);
 
-                // Margins
-                vbox2.set_margin_start(10);
-                vbox2.set_margin_end(10);
-                vbox2.set_margin_top(15);
-                vbox2.set_margin_bottom(10);
+                        vbox_file.set_margin_start(10);
+                        vbox_file.set_margin_end(10);
+                        vbox_file.set_margin_top(15);
+                        vbox_file.set_margin_bottom(10);
 
-                let button = gtk::Button::with_label("About Us");
+                        window_file.add(&vbox_file);
 
-                window2.add(&vbox2);
-
-                button.connect_clicked(glib::clone!(@weak window2 => move |_| {
-                    let dialog = gtk::AboutDialogBuilder::new()
-                        .transient_for(&window2)
-                        .modal(true)
-                        .program_name("File Explorer")
-                        .version("0.2.0")
-                        .website("https://gtk-rs.org/")
-                        .authors(vec![
-                            "Tristan Faure".to_string(),
-                            "Iliane Formet".to_string(),
-                            "Arthur Garraud".to_string(),
-                        ])
-                        .build();
-
-                    dialog.present();
-                }));
-                vbox2.add(&button);
-
-                window2.present();
-                
+                        let label = Label::new(Some(&content));
+                        vbox_file.add(&label);
+                        println!("File opened: {}", name);
+                        println!("Content: {}", content);
+                        
+                        window_file.present();
+                    },
+                    _ => (),
+                }
             }
         }
     });
