@@ -499,8 +499,46 @@ fn build_ui(app: &Application) {
                         vbox_file.add(&label);
                         println!("File opened: {}", name);
                         println!("Content: {}", content);
-                        
+
                         window_file.present();
+                    },
+                    "png"|"jpg"|"jpeg"|"gif"|"bmp"|"tiff"|"svg" => {
+                        let window_image = gtk::Window::new(gtk::WindowType::Toplevel);
+                        window_image.set_title(&name);
+                        window_image.set_default_size(500, 500);
+
+                        let vbox_image = gtk::Box::new(Orientation::Vertical, 10);
+
+                        vbox_image.set_margin_start(10);
+                        vbox_image.set_margin_end(10);
+                        vbox_image.set_margin_top(15);
+                        vbox_image.set_margin_bottom(10);
+
+                        window_image.add(&vbox_image);
+
+                        let image = gtk::Image::from_file(&format!("{}/{}", *cd_directory_clone.borrow(), name));
+                        vbox_image.add(&image);
+                        println!("Image opened: {}", name);
+
+                        window_image.present();
+                    },
+                    "mp4" => {
+                        let window_video = gtk::Window::new(gtk::WindowType::Toplevel);
+                        window_video.set_title(&name);
+                        window_video.set_default_size(500, 500);
+
+                        let vbox_video = gtk::Box::new(Orientation::Vertical, 10);
+
+                        vbox_video.set_margin_start(10);
+                        vbox_video.set_margin_end(10);
+                        vbox_video.set_margin_top(15);
+                        vbox_video.set_margin_bottom(10);
+
+                        window_video.add(&vbox_video);
+
+                        println!("Video opened: {}", name);
+
+                        window_video.present();
                     },
                     _ => (),
                 }
