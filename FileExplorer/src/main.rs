@@ -222,12 +222,25 @@ fn build_ui(app: &Application) {
         add_button.connect_clicked(move |add_button| {
                 let button = gtk::Button::with_label("About Us");
 
+                let vbox2 = gtk::Box::new(Orientation::Vertical, 10);
+
+                vbox2.set_margin_start(10);
+                vbox2.set_margin_end(10);
+                vbox2.set_margin_top(15);
+                vbox2.set_margin_bottom(10);
+
+
                 // Create window
                 let window2 = gtk::WindowBuilder::new()
                     .title("File Explorer")
                     .default_width(500)
                     .default_height(500)
                     .build();
+
+                vbox2.add(&button);
+                vbox2.show_all();
+
+                window2.add(&vbox2);
 
 
                 button.connect_clicked(glib::clone!(@weak window2 => move |_| {
@@ -245,6 +258,7 @@ fn build_ui(app: &Application) {
                         ])
                         .visible(true)
                         .build();
+                    dialog.show_all();
         
                     dialog.present();
                 }));
@@ -479,7 +493,7 @@ fn build_ui(app: &Application) {
                 let name = file_name.unwrap_or_default();
                 let extension = name.split('.').last().unwrap_or_default();
                 match extension {
-                    "txt"|"pdf"|"toml"|"doc"|"docx"|"xls"|"xlsx"|"lock"|"rs" => {
+                    "txt"|"pdf"|"toml"|"doc"|"docx"|"xls"|"xlsx"|"lock"|"rs"|"md"|"" => {
                         let content = read_file_to_string(&format!("{}/{}", *cd_directory_clone.borrow(), name)).unwrap_or_default();
                         let window_file = gtk::Window::new(gtk::WindowType::Toplevel);
                         window_file.set_title(&name);
@@ -492,12 +506,29 @@ fn build_ui(app: &Application) {
                         vbox_file.set_margin_top(15);
                         vbox_file.set_margin_bottom(10);
 
+                        // Scrolled window
+                        let scrolled_window_file = gtk::ScrolledWindow::new(None::<&gtk::Adjustment>, None::<&gtk::Adjustment>);
+                        scrolled_window_file.set_min_content_width(900);
+                        scrolled_window_file.set_min_content_height(900);
+
                         window_file.add(&vbox_file);
 
-                        let label = Label::new(Some(&content));
-                        vbox_file.add(&label);
+                        let label = gtk::LabelBuilder::new().label(&content)
+                        .halign(gtk::Align::Start)
+                        .valign(gtk::Align::Start)
+                        .max_width_chars(50)
+                        .wrap(true)
+                        .justify(gtk::Justification::Fill)
+                        .selectable(true)
+                        .opacity(0.8)
+                        .visible(true)
+                        .build();
+
+                        scrolled_window_file.add(&label);
+                        vbox_file.add(&scrolled_window_file);
+                        vbox_file.show_all();
+                        
                         println!("File opened: {}", name);
-                        println!("Content: {}", content);
 
                         window_file.present();
                     },
@@ -505,8 +536,19 @@ fn build_ui(app: &Application) {
                         let window_image = gtk::Window::new(gtk::WindowType::Toplevel);
                         window_image.set_title(&name);
                         window_image.set_default_size(500, 500);
+                        window_image.set_resizable(true);
+                        window_image.set_position(gtk::WindowPosition::Center);
+                        window_image.set_modal(true);
 
-                        let vbox_image = gtk::Box::new(Orientation::Vertical, 10);
+
+                        let vbox_image = gtk::BoxBuilder::new()
+                            .orientation(Orientation::Vertical)
+                            .spacing(10)
+                            .height_request(500)
+                            .width_request(500)
+                            .visible(true)
+                            .expand(true)
+                            .build();
 
                         vbox_image.set_margin_start(10);
                         vbox_image.set_margin_end(10);
@@ -515,32 +557,88 @@ fn build_ui(app: &Application) {
 
                         window_image.add(&vbox_image);
 
-                        let image = gtk::Image::from_file(&format!("{}/{}", *cd_directory_clone.borrow(), name));
+                        let image = gtk::ImageBuilder::new().file(&format!("{}/{}", *cd_directory_clone.borrow(), name))
+                            .visible(true)
+                            .expand(true)
+                            .pixel_size(500)
+                            .height_request(500)
+                            .width_request(500)
+                            .build();
                         vbox_image.add(&image);
+                        vbox_image.show_all();
                         println!("Image opened: {}", name);
 
+                        window_image.resize(500, 500);
                         window_image.present();
                     },
-                    "mp4" => {
-                        let window_video = gtk::Window::new(gtk::WindowType::Toplevel);
-                        window_video.set_title(&name);
-                        window_video.set_default_size(500, 500);
+                    "mp4"|"mp3"|"mov"|"wav" => {
+                        // Chemin de la vidéo à lire
+                        let video_path = &name;
 
-                        let vbox_video = gtk::Box::new(Orientation::Vertical, 10);
+                        // Liste des lecteurs vidéo à tester
+                        let video_players = vec!["vlc", "mpv", "totem", "smplayer"];
+                        for player in video_players {
+                            if is_installed(player) {
+                                println!("{} est installé. Lancement de la vidéo...", player);
+                                let status = Command::new(player)
+                                    .arg(video_path)
+                                    .status();
 
-                        vbox_video.set_margin_start(10);
-                        vbox_video.set_margin_end(10);
-                        vbox_video.set_margin_top(15);
-                        vbox_video.set_margin_bottom(10);
-
-                        window_video.add(&vbox_video);
-
-                        // TODO: open the video
-                        println!("Video opened: {}", name);
-
-                        window_video.present();
+                                match status {
+                                    Ok(status) => {
+                                        if status.success() {
+                                            println!("La vidéo a été lancée avec succès avec {}.", player);
+                                        } else {
+                                            eprintln!("La vidéo n'a pas pu être lancée avec {}. Code de sortie : {}.", player, status);
+                                        }
+                                    }
+                                    Err(e) => {
+                                        eprintln!("Erreur lors de la tentative de lancement de la vidéo avec {}: {}", player, e);
+                                    }
+                                }
+                                break;
+                            } else {
+                                println!("{} n'est pas installé.", player);
+                            }
+                        }
                     },
-                    _ => (),
+                    _ => {
+                        println!("File type not supported: {}", extension);
+                        let window_file = gtk::Window::new(gtk::WindowType::Toplevel);
+                        window_file.set_title(&name);
+                        window_file.set_default_size(500, 500);
+
+                        let vbox_file = gtk::Box::new(Orientation::Vertical, 10);
+
+                        vbox_file.set_margin_start(10);
+                        vbox_file.set_margin_end(10);
+                        vbox_file.set_margin_top(15);
+                        vbox_file.set_margin_bottom(10);
+
+                        // Scrolled window
+                        let scrolled_window_file = gtk::ScrolledWindow::new(None::<&gtk::Adjustment>, None::<&gtk::Adjustment>);
+                        scrolled_window_file.set_min_content_width(900);
+                        scrolled_window_file.set_min_content_height(900);
+
+                        window_file.add(&vbox_file);
+
+                        let label = gtk::LabelBuilder::new().label("File type not supported yet.")
+                        .halign(gtk::Align::Start)
+                        .valign(gtk::Align::Start)
+                        .max_width_chars(50)
+                        .wrap(true)
+                        .justify(gtk::Justification::Fill)
+                        .selectable(true)
+                        .opacity(0.8)
+                        .visible(true)
+                        .build();
+
+                        scrolled_window_file.add(&label);
+                        vbox_file.add(&scrolled_window_file);
+                        vbox_file.show_all();
+
+                        window_file.present();
+                    },
                 }
             }
         }
@@ -775,4 +873,10 @@ fn build_ui(app: &Application) {
         Ok(contents)
     }
     
-
+    // Fonction pour vérifier si une application est installée
+    fn is_installed(app: &str) -> bool {
+        Command::new("which")
+            .arg(app)
+            .output()
+            .map_or(false, |output| output.status.success())
+    }
