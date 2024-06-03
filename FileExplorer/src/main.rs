@@ -66,9 +66,12 @@ fn build_ui(app: &Application) {
         .expect("Failed to set dark theme preference");
 
     // Create window
-    let window = gtk::Window::new(gtk::WindowType::Toplevel);
-    window.set_title("File Explorer");
-    window.set_default_size(500, 500);
+    let window = gtk::WindowBuilder::new()
+        .application(app)
+        .title("File Explorer")
+        .default_width(500)
+        .default_height(500)
+        .build();
 
     // Create vbox
     let vbox = gtk::Box::new(Orientation::Vertical, 10);
@@ -212,56 +215,52 @@ fn build_ui(app: &Application) {
   // CONNECT UI TO ACTIONS
     // about us button
     let add_button = gtk::Button::with_label("More About Us");
-    add_button.set_margin_top(5);
-    add_button.set_margin_bottom(5);
-    vbox.add(&add_button);
+        add_button.set_margin_top(5);
+        add_button.set_margin_bottom(5);
+        vbox.add(&add_button);
 
-    add_button.connect_clicked(|add_button| {
-        let button = gtk::Button::with_label("About Us");
+        add_button.connect_clicked(move |add_button| {
+                let button = gtk::Button::with_label("About Us");
 
-        // Create window
-        let window2 = gtk::Window::new(gtk::WindowType::Toplevel);
-        window2.set_title("Groupe Alea2");
-        window2.set_default_size(500, 500);
+                // Create window
+                let window2 = gtk::WindowBuilder::new()
+                    .title("File Explorer")
+                    .default_width(500)
+                    .default_height(500)
+                    .build();
 
-        // Create vbox
-        let vbox2 = gtk::Box::new(Orientation::Vertical, 10);
 
-        vbox2.pack_start(&button, false, false, 0);
+                button.connect_clicked(glib::clone!(@weak window2 => move |_| {
+                    let dialog = gtk::AboutDialogBuilder::new()
+                        .transient_for(&window2)
+                        .modal(true)
+                        .program_name("File Explorer")
+                        .version("0.2.0")
+                        .website_label("GTK-RS Website")
+                        .website("https://gtk-rs.org/")
+                        .authors(vec![
+                            "Tristan Faure".to_string(),
+                            "Iliane Formet".to_string(),
+                            "Arthur Garraud".to_string(),
+                        ])
+                        .visible(true)
+                        .build();
+        
+                    dialog.present();
+                }));
 
-        window2.add(&vbox2);
+                window2.present();
+        });
+        // reveal search button
+        let search_revealer_clone1 = Rc::clone(&search_revealer);
 
-        button.connect_clicked(glib::clone!(@weak window2 => move |_| {
-            let dialog = gtk::AboutDialogBuilder::new()
-                .transient_for(&window2)
-                .modal(true)
-                .program_name("File Explorer")
-                .version("0.2.0")
-                .website_label("GTK-RS Website")
-                .website("https://gtk-rs.org/")
-                .authors(vec![
-                    "Tristan Faure".to_string(),
-                    "Iliane Formet".to_string(),
-                    "Arthur Garraud".to_string(),
-                ])
-                .visible(true)
-                .build();
-
-            dialog.present();
-        }));
-
-        window2.present();
-    });
-    // reveal search button
-    let search_revealer_clone1 = Rc::clone(&search_revealer);
-
-    search_button.connect_clicked(move |_| {
-        let is_revealed = search_revealer_clone1.borrow().get_reveal_child();
-        search_revealer_clone1.borrow_mut().set_reveal_child(!is_revealed);
-    });
-   // New directory button
-    let new_dir_directory_clone = Rc::clone(&current_directory);
-    let revealer_clone1 = Rc::clone(&revealer);
+        search_button.connect_clicked(move |_| {
+            let is_revealed = search_revealer_clone1.borrow().get_reveal_child();
+            search_revealer_clone1.borrow_mut().set_reveal_child(!is_revealed);
+        });
+       // New directory button
+        let new_dir_directory_clone = Rc::clone(&current_directory);
+        let revealer_clone1 = Rc::clone(&revealer);
     let revealer_clone2 = Rc::clone(&revealer);
     let list_store_clone = list_store.clone();
 
@@ -536,6 +535,7 @@ fn build_ui(app: &Application) {
 
                         window_video.add(&vbox_video);
 
+                        // TODO: open the video
                         println!("Video opened: {}", name);
 
                         window_video.present();
