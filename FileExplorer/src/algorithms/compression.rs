@@ -7,6 +7,31 @@ use zip::write::{FileOptions, ZipWriter};
 use zip::CompressionMethod;
 use zip::read::ZipArchive;
 
+use std::process::Command;
+
+// Compress VIDEO
+pub fn compress_video(video_input: &str, video_output: &str) {
+    let status = Command::new("ffmpeg")
+        .arg("-y")
+        .arg("-i").arg(video_input)
+        .arg("-s").arg("1280x720")
+        .arg("-r").arg("30")  // Increase frame rate to 30 fps
+        .arg("-c:v").arg("libx264")
+        .arg("-b:v").arg("600k")
+        .arg("-b:a").arg("44100")
+        .arg("-ac").arg("2")
+        .arg("-ar").arg("22050")
+        .arg("-tune").arg("fastdecode")
+        .arg("-preset").arg("ultrafast")
+        .arg(video_output)
+        .status()
+        .expect("Failed to execute ffmpeg");
+}
+
+
+
+
+// Compress Folder
 pub fn compress_folder(folder_path: &str, output_path: &str) -> io::Result<()> {
     let folder = Path::new(folder_path);
     let output_file = fs::File::create(output_path)?;
@@ -108,4 +133,12 @@ pub fn uncompress_folder(zip_file_path: &str, output_dir: &str) -> Result<(), St
 
     Ok(())
 }
+
+
+
+
+
+
+
+
 
