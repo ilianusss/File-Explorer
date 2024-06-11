@@ -1,2 +1,3 @@
 # S4_File-Explorer
-File Explorer in Rust
+Programamtion project for EPITA.
+File Explorer in Rust, using gtk for user interface.
